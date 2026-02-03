@@ -3,11 +3,11 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, EmailStr
 
 
-
 class UserBase(BaseModel):
-    username: str = Field(min_length=
-                          1, max_length=50)
-    email: EmailStr = Field(max_length=120) # Email str will automatically validate if our email is an email. No min length required.
+    username: str = Field(min_length=1, max_length=50)
+    email: EmailStr = Field(
+        max_length=120
+    )  # Email str will automatically validate if our email is an email. No min length required.
 
 
 class UserResponse(UserBase):
@@ -20,15 +20,21 @@ class UserResponse(UserBase):
     image_path: str
 
 
+class UserUpdate(BaseModel):
+    username: str | None = Field(default=None, min_length=1, max_length=50)
+    email: EmailStr | None = Field(
+        default=None, max_length=120
+    )  # Email str will automatically validate if our email is an email. No min length required.
+    image_file: str | None = Field(default=None, min_length=1, max_length=200)
 
 
 class UserCreate(UserBase):
     pass
 
+
 class PostBase(BaseModel):
     title: str = Field(min_length=1, max_length=100)
     content: str = Field(min_length=1)
-    
 
 
 class PostResponse(PostBase):
@@ -38,9 +44,13 @@ class PostResponse(PostBase):
 
     id: int  # Only effects the local scope and is the convention instead of "_id"
     date_posted: datetime
-    author: UserResponse # Pydantic will load the related user when a post is loaded
+    author: UserResponse  # Pydantic will load the related user when a post is loaded
 
 
 class PostCreate(PostBase):
-    user_id: int # For testing. TEMPORARY
+    user_id: int  # For testing. TEMPORARY
 
+
+class PostUpdate(BaseModel):
+    title: str | None = Field(default=None, min_length=1, max_length=100)
+    content: str | None = Field(default=None, min_length=1)
