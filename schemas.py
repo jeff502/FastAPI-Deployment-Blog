@@ -58,7 +58,7 @@ class PostResponse(PostBase):
 
 
 class PostCreate(PostBase):
-    user_id: int  # For testing. TEMPORARY
+    pass
 
 
 class PostUpdate(BaseModel):
