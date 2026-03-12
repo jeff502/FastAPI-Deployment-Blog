@@ -30,7 +30,7 @@ class UserUpdate(BaseModel):
     email: EmailStr | None = Field(
         default=None, max_length=120
     )  # Email str will automatically validate if our email is an email. No min length required.
-    image_file: str | None = Field(default=None, min_length=1, max_length=200)
+    
 
 
 class Token(BaseModel):
