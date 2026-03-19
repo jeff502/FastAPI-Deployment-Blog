@@ -30,7 +30,6 @@ class UserUpdate(BaseModel):
     email: EmailStr | None = Field(
         default=None, max_length=120
     )  # Email str will automatically validate if our email is an email. No min length required.
-    
 
 
 class Token(BaseModel):
@@ -64,3 +63,11 @@ class PostCreate(PostBase):
 class PostUpdate(BaseModel):
     title: str | None = Field(default=None, min_length=1, max_length=100)
     content: str | None = Field(default=None, min_length=1)
+
+
+class PaginatedPostsResponse(BaseModel):
+    posts: list[PostResponse]
+    total: int
+    skip: int
+    limit: int
+    has_more: bool
