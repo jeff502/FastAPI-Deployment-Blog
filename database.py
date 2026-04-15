@@ -1,16 +1,18 @@
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
-
+from config import settings
 
 # +aiosqlite tells sqlite what driver to use
-SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///./blog.db"  # current dir/blog.db
 
-engine = create_async_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={
-        "check_same_thread": False
-    },  # SQLite specific since it doesn't support multiple threads
-)
+# engine = create_async_engine(
+#     SQLALCHEMY_DATABASE_URL,
+#     connect_args={
+#         "check_same_thread": False
+#     },  # SQLite specific since it doesn't support multiple threads
+# )
+
+engine = create_async_engine(settings.database_url)
+
 
 # SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine) # Factory that creates sessions. Autocommit and Autoflush to false is standard FastAPI pattern.
 
