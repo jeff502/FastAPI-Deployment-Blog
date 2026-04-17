@@ -8,12 +8,10 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 from config import settings
-import models
 from database import Base
 
-import asyncio
 import sys
-import selectors
+
 
 if sys.platform == "win32":
     # Force the use of SelectorEventLoop on Windows for psycopg compatibility
