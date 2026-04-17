@@ -11,9 +11,7 @@ from image_utils import PROFILE_PICS_DIR
 from main import app
 
 
-import asyncio
 import sys
-import selectors
 
 if sys.platform == "win32":
     # Force the use of SelectorEventLoop on Windows for psycopg compatibility
