@@ -10,6 +10,15 @@ from database import AsyncSessionLocal, engine
 from image_utils import PROFILE_PICS_DIR
 from main import app
 
+
+import asyncio
+import sys
+import selectors
+
+if sys.platform == "win32":
+    # Force the use of SelectorEventLoop on Windows for psycopg compatibility
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 POPULATE_IMAGES_DIR = Path("populate_images")
 
 USERS = [
