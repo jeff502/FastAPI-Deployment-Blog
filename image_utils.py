@@ -1,12 +1,32 @@
 import uuid
 from io import BytesIO
-from pathlib import Path
 from PIL import Image, ImageOps
 
-PROFILE_PICS_DIR = Path("media/profile_pics")
+import boto3
+from starlette.concurrency import run_in_threadpool
+
+from config import settings
 
 
-def process_profile_image(content: bytes) -> str:
+def _get_s3_client():
+    return boto3.client(
+        "s3",
+        region_name=settings.s3_region,
+        aws_access_key_id=(
+            settings.s3_access_key_id.get_secret_value()
+            if settings.s3_access_key_id
+            else None
+        ),
+        aws_secret_access_key=(
+            settings.s3_secret_access_key.get_secret_value()
+            if settings.s3_secret_access_key
+            else None
+        ),
+        endpoint_url=settings.s3_endpoint_url,
+    )
+
+
+def process_profile_image(content: bytes) -> tuple[bytes, str]:
     with Image.open(BytesIO(content)) as original:
         img = ImageOps.exif_transpose(original)  # Removes mobile rotation data
         img = ImageOps.fit(img, (300, 300), method=Image.Resampling.LANCZOS)
@@ -15,18 +35,42 @@ def process_profile_image(content: bytes) -> str:
             img = img.convert("RGB")
 
         filename = f"{uuid.uuid4().hex}.jpg"  # for security. Stops filename collisions
-        filepath = PROFILE_PICS_DIR / filename
 
-        PROFILE_PICS_DIR.mkdir(parents=True, exist_ok=True)
-        img.save(filepath, "JPEG", quality=85, optimize=True)
+        output = BytesIO()
 
-    return filename
+        img.save(output, "JPEG", quality=85, optimize=True)
+        output.seek(0)  # Going back to the first Byte
+
+    return output.read(), filename
 
 
-def delete_profile_image(filename: str | None) -> None:
+def _upload_to_s3(
+    file_bytes: bytes, key: str
+) -> None:  # Be default this will block unless we make it async
+    s3 = _get_s3_client()
+    s3.upload_fileobj(
+        BytesIO(file_bytes),
+        settings.s3_bucket_name,
+        key,
+        ExtraArgs={
+            "ContentType": "image/jpeg"
+        },  # If you don't do this, sometimes browsers will instead download the image instead of displaying it.
+    )
+
+
+def _delete_from_s3(key: str) -> None:
+    s3 = _get_s3_client()
+    s3.delete_object(Bucket=settings.s3_bucket_name, Key=key)
+
+
+# Needed to not block the event loop in an Async app
+async def upload_profile_image(file_bytes: bytes, filename: str) -> None:
+    key = f"profile_pics/{filename}"
+    await run_in_threadpool(_upload_to_s3, file_bytes, key)
+
+# Needed to not block the event loop in an Async app
+async def delete_profile_image(filename: str | None) -> None:
     if filename is None:
         return
-
-    filepath = PROFILE_PICS_DIR / filename
-    if filepath.exists():
-        filepath.unlink()
+    key = f"profile_pics/{filename}"
+    await run_in_threadpool(_delete_from_s3, key)
