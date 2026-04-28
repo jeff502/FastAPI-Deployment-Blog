@@ -10,7 +10,7 @@ from fastapi.templating import Jinja2Templates
 
 from contextlib import asynccontextmanager
 
-from sqlalchemy import select, func
+from sqlalchemy import select, func, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -40,6 +40,19 @@ templates = Jinja2Templates(directory="templates")
 
 app.include_router(users.router, prefix="/api/users", tags=["users"])
 app.include_router(posts.router, prefix="/api/posts", tags=["posts"])
+
+
+## Health Check Endpoint
+@app.get("/health")
+async def health_check(db: Annotated[AsyncSession, Depends(get_db)]):
+    try:
+        await db.execute(text("SELECT 1")) # Fast and cheap way of checking if the DB is alive
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database unavailable",
+        ) from exc
+    return {"status": "healthy"}
 
 
 # GET request
@@ -179,7 +192,9 @@ async def reset_password_page(request: Request):
         "reset_password.html",
         {"title": "Reset Password"},
     )
-    response.headers["Referrer-Policy"] = "no-referrer" # Security to not allow our token to be traced to another site
+    response.headers["Referrer-Policy"] = (
+        "no-referrer"  # Security to not allow our token to be traced to another site
+    )
     return response
 
 
